@@ -11,6 +11,7 @@ import UIKit
 class WeatherUpdatesTableViewController: UITableViewController, NewWeatherUpdate, SettingsChange {
 
     private var weatherListViewModel = WeatherListViewModel()
+    private var dataSource: WeatherDataSource!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -18,6 +19,9 @@ class WeatherUpdatesTableViewController: UITableViewController, NewWeatherUpdate
         self.navigationController?.navigationBar.prefersLargeTitles = true
         
         self.tableView.tableFooterView = UIView()
+        
+        self.dataSource = WeatherDataSource(weatherListViewModel)
+        self.tableView.dataSource = dataSource
         
         // Uncomment the following line to preserve selection between presentations
         // self.clearsSelectionOnViewWillAppear = false
@@ -42,27 +46,7 @@ class WeatherUpdatesTableViewController: UITableViewController, NewWeatherUpdate
     
     // MARK: - Table view data source
 
-    override func numberOfSections(in tableView: UITableView) -> Int {
-        // #warning Incomplete implementation, return the number of sections
-        return 1
-    }
-
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        // #warning Incomplete implementation, return the number of rows
-        return weatherListViewModel.numberOfRows(section)
-    }
-
     
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath)
-
-        let vm = weatherListViewModel.weatherViewModelAt(indexPath.row)
-        cell.textLabel?.text = "\(vm.name)"
-        cell.detailTextLabel?.text = vm.temperatureDetails.temperature.parseAsDegree
-       
-
-        return cell
-    }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         
