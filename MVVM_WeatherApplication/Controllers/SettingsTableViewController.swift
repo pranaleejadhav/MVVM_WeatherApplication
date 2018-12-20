@@ -1,23 +1,30 @@
 //
-//  WeatherUpdatesTableViewController.swift
+//  SettingsTableViewController.swift
 //  MVVM_WeatherApplication
 //
-//  Created by Pranalee Jadhav on 12/11/18.
+//  Created by Pranalee Jadhav on 12/18/18.
 //  Copyright © 2018 Pranalee Jadhav. All rights reserved.
 //
 
 import UIKit
 
-class WeatherUpdatesTableViewController: UITableViewController, NewWeatherUpdate, SettingsChange {
+protocol SettingsChange {
+    func settingsUpdated(vm: SettingsViewModel)
+}
 
-    private var weatherListViewModel = WeatherListViewModel()
+class SettingsTableViewController: UITableViewController {
+
+    var settingsViewModel = SettingsViewModel()
+    var delegate: SettingsChange?
     
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        self.navigationController?.navigationBar.prefersLargeTitles = true
         
+        
+        self.navigationController?.navigationBar.prefersLargeTitles = true
         self.tableView.tableFooterView = UIView()
+        
         
         // Uncomment the following line to preserve selection between presentations
         // self.clearsSelectionOnViewWillAppear = false
@@ -26,19 +33,13 @@ class WeatherUpdatesTableViewController: UITableViewController, NewWeatherUpdate
         // self.navigationItem.rightBarButtonItem = self.editButtonItem
     }
 
-    
-    func newWeatherAdded(vm: WeatherViewModel) {
-        weatherListViewModel.addWeatherViewModel(vm)
-        self.tableView.reloadData()
-    }
-    
-    func settingsUpdated(vm: SettingsViewModel) {
+    @IBAction func done() {
         
-        weatherListViewModel.updateUnit(to: vm.selectedUnit)
-        
-        self.tableView.reloadData()
+        if let delegate = self.delegate {
+            delegate.settingsUpdated(vm: settingsViewModel)
+        }
+        self.dismiss(animated: true, completion: nil)
     }
-    
     
     // MARK: - Table view data source
 
@@ -49,56 +50,40 @@ class WeatherUpdatesTableViewController: UITableViewController, NewWeatherUpdate
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        return weatherListViewModel.numberOfRows(section)
+        return settingsViewModel.units.count
     }
 
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath)
-
-        let vm = weatherListViewModel.weatherViewModelAt(indexPath.row)
-        cell.textLabel?.text = "\(vm.name)"
-        cell.detailTextLabel?.text = vm.temperatureDetails.temperature.parseAsDegree
-       
-
+        let unit = settingsViewModel.units[indexPath.row]
+        cell.textLabel?.text = unit.displayText
+        
+        if unit == settingsViewModel.selectedUnit {
+            cell.accessoryType = .checkmark
+        }
+        
         return cell
     }
     
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
-        if segue.identifier == "goToSettings" {
-            configureSettingsSegue(segue: segue)
-        } else if segue.identifier == "goToAddCity" {
-            configureAddCitySegue(segue: segue)
+        tableView.visibleCells.forEach { cell in
+            cell.accessoryType = .none
         }
         
-       
+        if let cell = tableView.cellForRow(at: indexPath) {
+            cell.accessoryType = .checkmark
+            let unit = settingsViewModel.units[indexPath.row]
+            settingsViewModel.selectedUnit = unit
+        }
     }
     
-    func configureSettingsSegue(segue: UIStoryboardSegue) {
-        guard let nav = segue.destination as? UINavigationController else {
-            fatalError("Navigation Controller not found")
+    override func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
+        if let cell = tableView.cellForRow(at: indexPath) {
+            cell.accessoryType = .none
         }
-        
-        guard let vc = nav.viewControllers.first as? SettingsTableViewController else {
-            fatalError("view Controller not found")
-        }
-        vc.delegate = self
-    
     }
-    
-    
-    func configureAddCitySegue(segue: UIStoryboardSegue) {
-        guard let nav = segue.destination as? UINavigationController else {
-            fatalError("Navigation Controller not found")
-        }
-        
-        guard let vc = nav.viewControllers.first as? AddCityViewController else {
-            fatalError("view Controller not found")
-        }
-        vc.delegate = self
-    }
-    
     
     /*
     // Override to support conditional editing of the table view.
